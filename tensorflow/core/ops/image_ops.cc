@@ -434,6 +434,7 @@ REGISTER_OP("DrawBoundingBoxes")
     .Input("boxes: float")
     .Output("output: T")
     .Attr("T: {float, half} = DT_FLOAT")
+    .Attr("fill: bool = false")
     .SetShapeFn([](InferenceContext* c) {
       // The rank of images should be 4.
       ShapeHandle images;

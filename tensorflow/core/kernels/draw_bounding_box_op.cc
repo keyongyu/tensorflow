@@ -27,9 +27,13 @@ namespace tensorflow {
 
 template <class T>
 class DrawBoundingBoxesOp : public OpKernel {
+ private:
+  bool fill_;
  public:
   explicit DrawBoundingBoxesOp(OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+      OP_REQUIRES_OK(context, context->GetAttr("fill", &fill_));
+  }
 
   void Compute(OpKernelContext* context) override {
     const Tensor& images = context->input(0);
@@ -139,37 +143,47 @@ class DrawBoundingBoxesOp : public OpKernel {
         CHECK_LT(min_box_col, width);
         CHECK_GE(max_box_col, 0);
 
-        // Draw top line.
-        if (min_box_row >= 0) {
-          for (int64 j = min_box_col_clamp; j <= max_box_col_clamp; ++j)
-            for (int64 c = 0; c < depth; c++) {
-              canvas(b, min_box_row, j, c) =
-                  static_cast<T>(color_table[color_index][c]);
+        if(!fill_){
+            // Draw top line.
+            if (min_box_row >= 0) {
+              for (int64 j = min_box_col_clamp; j <= max_box_col_clamp; ++j)
+                for (int64 c = 0; c < depth; c++) {
+                  canvas(b, min_box_row, j, c) =
+                      static_cast<T>(color_table[color_index][c]);
+                }
             }
-        }
-        // Draw bottom line.
-        if (max_box_row < height) {
-          for (int64 j = min_box_col_clamp; j <= max_box_col_clamp; ++j)
-            for (int64 c = 0; c < depth; c++) {
-              canvas(b, max_box_row, j, c) =
-                  static_cast<T>(color_table[color_index][c]);
+            // Draw bottom line.
+            if (max_box_row < height) {
+              for (int64 j = min_box_col_clamp; j <= max_box_col_clamp; ++j)
+                for (int64 c = 0; c < depth; c++) {
+                  canvas(b, max_box_row, j, c) =
+                      static_cast<T>(color_table[color_index][c]);
+                }
             }
-        }
-        // Draw left line.
-        if (min_box_col >= 0) {
-          for (int64 i = min_box_row_clamp; i <= max_box_row_clamp; ++i)
-            for (int64 c = 0; c < depth; c++) {
-              canvas(b, i, min_box_col, c) =
-                  static_cast<T>(color_table[color_index][c]);
+            // Draw left line.
+            if (min_box_col >= 0) {
+              for (int64 i = min_box_row_clamp; i <= max_box_row_clamp; ++i)
+                for (int64 c = 0; c < depth; c++) {
+                  canvas(b, i, min_box_col, c) =
+                      static_cast<T>(color_table[color_index][c]);
+                }
             }
-        }
-        // Draw right line.
-        if (max_box_col < width) {
-          for (int64 i = min_box_row_clamp; i <= max_box_row_clamp; ++i)
-            for (int64 c = 0; c < depth; c++) {
-              canvas(b, i, max_box_col, c) =
-                  static_cast<T>(color_table[color_index][c]);
+            // Draw right line.
+            if (max_box_col < width) {
+              for (int64 i = min_box_row_clamp; i <= max_box_row_clamp; ++i)
+                for (int64 c = 0; c < depth; c++) {
+                  canvas(b, i, max_box_col, c) =
+                      static_cast<T>(color_table[color_index][c]);
+                }
             }
+        }else{
+            //I am not sure if memory layout, here I assume the layout is row major.
+            for (int64 i = min_box_row_clamp; i <= max_box_row_clamp; ++i)
+                for (int64 j = min_box_col_clamp; j <= max_box_col_clamp; ++j)
+                    for (int64 c = 0; c < depth; c++) {
+                        canvas(b, i, j, c) = static_cast<T>(0) ;
+                        //    static_cast<T>(color_table[color_index][c]);
+                    }
         }
       }
     }

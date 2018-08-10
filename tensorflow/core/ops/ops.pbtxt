@@ -8976,6 +8976,14 @@ op {
       }
     }
   }
+  attr {
+    name: "fill"
+    type: "bool"
+    default_value {
+      b: false
+    }
+    description: "if true, fill black boxes."
+  }
 }
 op {
   name: "DynamicPartition"
